@@ -1,0 +1,226 @@
+﻿@inherits LayoutComponentBase
+@using Shop.Models.CustomModels;
+@using Shop.Client.Services;
+@inject IClientPanelService clientPanelService;
+@inject NavigationManager navManager;
+@inject ILocalStorageService? LocalStorage;
+@inject ISessionStorageService sessionStorage;
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<style>
+    .mainlayout {
+        max-width: 900px;
+        margin: auto;
+        background: white;
+        padding: 10px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .header {
+        color: black;
+        padding: 5px;
+        border: 1px groove #808080;
+        border-radius: 14px;
+        background: linear-gradient(-45deg, #ffd800, #808080, #23a6d5, #f5f542);
+        background-size: 400% 400%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .header img {
+            cursor: pointer;
+            max-height: 50px;
+        }
+
+    .footer {
+        color: black;
+        padding: 5px;
+        border: 1px groove #808080;
+        border-radius: 7px;
+        background: linear-gradient(-45deg, #ffd800, #808080, #23a6d5, #f5f542);
+        background-size: 400% 400%;
+        text-align: center;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+    }
+
+        .nav-links a {
+            margin-left: 15px;
+            text-decoration: none;
+            color: black;
+        }
+
+        .nav-links i {
+            margin-right: 5px;
+        }
+
+    .cart-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .cart-icon i {
+            display: flex;
+            align-items: center;
+            font-size: 28px;
+            color: black;
+        }
+
+    .cart-count {
+        font-size: 35px;
+        vertical-align: top;
+        padding: 7px;
+        color: black;
+        border-radius: 50%;
+        padding-top: 10px;
+        font-weight: bold;
+        display: inline-block;
+        margin-left: 5px;
+        font-size: 0.8em;
+    }
+
+    .content {
+        padding: 0 4px;
+    }
+</style>
+
+<div class="mainlayout">
+    <main>
+        <div class="header">
+            <NavLink href="/">
+                <img src="/Images/logo-white.png" style="cursor: pointer;" />
+            </NavLink>
+            <div class="nav-links">
+                <NavLink href="/">Home</NavLink>
+                @if (IsUserLoggedIn)
+                {
+                    <NavLink href="myaccount">MyAccount</NavLink>
+                    <a @onclick="Logout" href="#">Logout<i class="fa fa-sign-out" style="padding-left: 5px;"></i></a>
+                    @*<span><i class="fade fa-user"></i> Welcome, @LoggedInUserName</span> *@
+                }
+                else
+                {
+                    <NavLink href="/login">Login</NavLink>
+                    <NavLink href="/register">Register</NavLink>
+                }
+            </div>
+            <div class="cart-icon">
+                <a href="/mycart" style="text-decoration: none;">
+                    <i class="fa fa-shopping-cart">
+                        <span class="cart-count"><sup>@cartCount</sup></span>
+                    </i>
+                </a>
+            </div>
+        </div>
+
+        <article class="content" style="width: 100%;">
+            <CascadingValue Value="event_notify">
+                @Body
+            </CascadingValue>
+        </article>
+
+        <div class="footer">
+            &copy; 2021 - Shopping Cart
+        </div>
+    </main>
+</div>
+
+@code {
+    private int cartCount = 0;
+    private int layoutState = 0;
+    private bool IsUserLoggedIn = false;
+    private string LoggedInUserName = "User";
+    private List<CartModel> myCart = new();
+    private bool flag = false;
+    EventCallback event_notify => EventCallback.Factory.Create(this, NotifyLayout);
+
+    private async Task NotifyLayout()
+    {
+        try
+        {
+            var userKey = await LocalStorage.GetItemAsync<string>("userkey");
+            flag = !string.IsNullOrEmpty(userKey);
+
+            if (flag == true)
+            {
+                IsUserLoggedIn = true;
+            }
+
+            if (IsUserLoggedIn && layoutState == 0)
+            {
+                var userNameSession = await LocalStorage.GetItemAsync<string>("username");
+                LoggedInUserName = userNameSession ?? "User";
+
+                var checkoutSession = await LocalStorage.GetItemAsync<string>("checkoutAlert");
+                if (!string.IsNullOrEmpty(checkoutSession))
+                {
+                    await LocalStorage.RemoveItemAsync("checkoutAlert");
+                    navManager.NavigateTo("/mycart");
+                }
+
+                layoutState++;
+            }
+
+            if (layoutState == -1)
+            {
+                StateHasChanged();
+            }
+
+            var result = await LocalStorage.GetItemAsync<List<CartModel>>("myCart");
+            if (result != null)
+            {
+                myCart = result;
+                cartCount = myCart.Count;
+                await LocalStorage.RemoveItemAsync("updateCartFlag");
+            }
+            else
+            {
+                cartCount = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in NotifyLayout: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task Logout()
+    {
+        try
+        {
+            await LocalStorage.RemoveItemAsync("userkey");
+            await LocalStorage.RemoveItemAsync("username");
+            await LocalStorage.RemoveItemAsync("useremail");
+            await NotifyLayout();
+            navManager.NavigateTo("/");
+            layoutState = -1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await NotifyLayout();
+        }
+    }
+}

@@ -1,0 +1,36 @@
+﻿@page "/register"
+
+<div style="min-height: 400px;">
+    <div class="loginBox">
+        <div class="box">
+            <h1>Register</h1>
+            <EditForm Model="@registerModel" OnValidSubmit="Register_Click">
+                <DataAnnotationsValidator />
+                <InputText type="text" name="email" placeholder="Name" class="email" @bind-Value="registerModel.Name" />
+                <ValidationMessage For="@(() => registerModel.Name)" />
+
+                <InputText type="email" name="email" placeholder="Email" class="email" @bind-Value="registerModel.EmailId" />
+                <ValidationMessage For="@(() => registerModel.EmailId)" />
+
+                <InputText type="text" name="mobileno" placeholder="Mobile Number" class="email" @bind-Value="registerModel.MobileNo" />
+                <ValidationMessage For="@(() => registerModel.MobileNo)" />
+
+                <InputText type="password" name="email" placeholder="Password" class="email" @bind-Value="registerModel.Password" />
+                <ValidationMessage For="@(() => registerModel.Password)" />
+
+                <InputText type="password" name="email" placeholder="Confirm Password" class="email" @bind-Value="registerModel.ConfirmPassword" />
+                <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+
+                <input type="submit" class="btn" value="Register" />
+                <a href="login"><div id="btn2">Login</div></a>
+            </EditForm>
+        </div>
+        <div>
+            <br />
+            <br />
+            <p style="color:#e52e50">
+                <h4>@alertMessage</h4>
+            </p>
+        </div>
+    </div>
+</div>

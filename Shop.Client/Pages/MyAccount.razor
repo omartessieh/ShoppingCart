@@ -1,0 +1,189 @@
+﻿@page "/myaccount"
+
+<div style="min-height: 400px;">
+    <div class="column menu" style="background-color:white;border-radius: 15px;">
+        <div class="vertical-menu">
+            <a class="@(myAccountFlag? "active" : "")" @onclick='(()=> ChangeActiveMenu("MyAccount"))'>My Account</a>
+            <a class="@(changePasswordFlag? "active" : "")" @onclick='(()=> ChangeActiveMenu("ChangePassword"))'>Change Password</a>
+            <a class="@(orderHistoryFlag? "active" : "")" @onclick='(()=> ChangeActiveMenu("OrderHistory"))'>Order History</a>
+        </div>
+    </div>
+    <div class="column content">
+        <div style="border:2px ridge #bacf67;padding: 10px;border-radius: 15px;">
+            <div style="border-bottom: 2px ridge #bacf67;"><h4>@headerText</h4></div>
+
+            @if (myAccountFlag)
+            {
+                <div style="width: 200px;">
+                    <div class="card">
+                        <img src="./Images/no-image.png" alt="Profile" style="width: 100%;" />
+                        <p>Name: @userName</p>
+                        <p>Email: @userEmail</p>
+                    </div>
+                </div>
+            }
+
+            @if (changePasswordFlag)
+            {
+                <div style="width: 400px;">
+                    <div class="form-group">
+                        <EditForm Model="@passwordModel" OnValidSubmit="ChangePassword_Click">
+                            <DataAnnotationsValidator />
+                            <div class="form-group">
+                                <label>Old Password:</label>
+                                <InputText type="text" class="form-control" id="oldpwd" @bind-Value="passwordModel.OldPassword"></InputText>
+                                <ValidationMessage For="@(() => passwordModel.OldPassword)" />
+                            </div>
+                            <div class="form-group">
+                                <label>New Password:</label>
+                                <InputText type="text" class="form-control" id="newpwd" @bind-Value="passwordModel.Password"></InputText>
+                                <ValidationMessage For="@(() => passwordModel.Password)" />
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Password:</label>
+                                <InputText type="text" class="form-control" id="confirmpwd" @bind-Value="passwordModel.ConfirmPassword"></InputText>
+                                <ValidationMessage For="@(() => passwordModel.ConfirmPassword)" />
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            }
+
+            @if (orderHistoryFlag)
+            {
+                <table class="table table-striped table-bordered bg-light">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Total #</th>
+                            <th>Order Date #</th>
+                            <th style="width:80px;">Track?</th>
+                            <th style="width:80px;">Details?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var odr in customerOrders)
+                        {
+                            <tr>
+                                <td>@odr.OrderId</td>
+                                <td>@odr.Total</td>
+                                <td>@odr.CreatedOn</td>
+                                <td>
+                                    <input type="button" class="btn btn-primary" value="Track" @onclick="(()=>Track_Click(odr.OrderId))" />
+                                </td>
+                                <td>
+                                    <input type="button" class="btn btn-secondary" value="Detail" @onclick="(()=> Detail_Click(odr.OrderId))" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </div>
+    </div>
+</div>
+
+@if (showTrackOrder == true)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Track Order</h5>
+                <span class="close" @onclick="ToggleTrackOrderPopup">&times;</span>
+            </div>
+            <div class="modal-body">
+                @if (shippingUpdates != null && shippingUpdates.Count > 0)
+                {
+                    <table>
+                        <tbody>
+                            @foreach (var odr in shippingUpdates)
+                            {
+                                <tr>
+                                    <td>@odr</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <span>No update on order shipping. please check after some time</span>
+                }
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="btn btn-primary" value="Close" @onclick="ToggleTrackOrderPopup" />
+            </div>
+        </div>
+    </div>
+}
+
+@if (showOrderDetail == true)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Order Details</h5>
+                <span class="Close" @onclick="ToggleOrderDetailPopup">&times;</span>
+            </div>
+            <div class="modal-body">
+                @if (myCart != null && myCart.Count > 0)
+                {
+                    <table class="table table-bordered">
+                        @foreach (var cart in myCart)
+                        {
+                            <tr>
+                                <td style="padding: 0px;">
+                                    <img src="@Imageslink/@cart.ProductImage" />
+                                    <div>
+                                        <p>@cart.ProductName</p>
+                                    </div>
+                                </td>
+                                <td style="padding: 0px;">@cart.Quantity X $@cart.Price</td>
+                                <td style="padding: 0px;">$@(cart.Price)</td>
+                            </tr>
+                        }
+                    </table>
+
+                    <table style="width:550px;border: 1px ridge #f5750d;">
+                        <tr>
+                            <td>Subtotal - $@subTotal.00</td>
+                            <td>Shipping Charges - $@shippingCharges.00</td>
+                        </tr>
+                        <tr>
+                            <td>Total - $@finalTotal.00</td>
+                            <td>Shipping Address - @shippingAddress</td>
+                        </tr>
+                        <tr>
+                            <td>Payment Mode - @paymentMode</td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="btn btn-secondary" value="Close" @onclick="ToggleOrderDetailPopup" />
+            </div>
+        </div>
+    </div>
+}
+
+@if (showAlertMessage == true)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Alert</h5>
+                <span class="close" @onclick="ToggleAlertMessage">&times;</span>
+            </div>
+            <div class="modal-body">
+                @alertMessage
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="btn btn-primary" value="Close" @onclick="ToggleAlertMessage" />
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,30 @@
+﻿@page "/login"
+
+<div style="min-height: 400px;">
+    <div class="loginBox">
+        <div class="box">
+            <h1>Login</h1>
+            <EditForm Model="@loginModel" OnValidSubmit="Login_Click">
+                <DataAnnotationsValidator />
+
+                <InputText type="email" name="email" placeholder="Email" class="email" @bind-Value="loginModel.Email" />
+                <ValidationMessage For="@(() => loginModel.Email)" />
+
+                <InputText type="password" name="email" placeholder="Password" class="email" @bind-Value="loginModel.Password" />
+                <ValidationMessage For="@(() => loginModel.Password)" />
+
+                <input type="submit" class="btn" value="Login" />
+                <a href="register"><div id="btn2">Register</div></a>
+            </EditForm>
+        </div>
+        <div>
+            <br />
+            <br />
+            <p style="color:#e52e50">
+                <h4>@alertMessage</h4>
+            </p>
+        </div>
+    </div>
+</div>
+
+

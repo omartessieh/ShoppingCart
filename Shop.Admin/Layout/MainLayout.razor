@@ -1,0 +1,60 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager navManager;
+@inject ILocalStorageService? LocalStorage;
+
+<div class="page">
+    @if (IsAdminLoggedIn)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
+    <main>
+        @if (IsAdminLoggedIn)
+        {
+            <div class="top-row px-4">
+                <a href="" @onclick="Logout">Logout</a>
+            </div>
+        }
+        <article class="content px-4">
+            <CascadingValue Value="event_notify">
+                @Body
+            </CascadingValue>
+        </article>
+    </main>
+</div>
+
+@code {
+    public bool IsAdminLoggedIn = false;
+    EventCallback event_notify => EventCallback.Factory.Create(this, NotifyLayout);
+
+    public async void Logout()
+    {
+        await LocalStorage.RemoveItemAsync("adminKey");
+        await NotifyLayout();
+        navManager.NavigateTo("/Login");
+    }
+
+    private async Task NotifyLayout()
+    {
+        var adminSession = await LocalStorage.GetItemAsync<string>("adminKey");
+        if (!string.IsNullOrEmpty(adminSession))
+        {
+            IsAdminLoggedIn = true;
+            StateHasChanged();
+        }
+        else
+        {
+            IsAdminLoggedIn = false;
+            navManager.NavigateTo("/Login");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await NotifyLayout();
+        }
+    }
+}
